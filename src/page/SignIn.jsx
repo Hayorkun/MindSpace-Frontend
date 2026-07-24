@@ -2,13 +2,13 @@ import FootTab from "../component/FootTab";
 import NavTab from "../component/NavTab";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext"
-
+import { useAuth } from "../context/AuthContext";
 
 const SignIn = () => {
-const { googleLogin } = useAuth()
+  const navigate = useNavigate()
+  const { googleLogin, githubLogin, signin } = useAuth();
 
   const SocialLink = [
     {
@@ -41,7 +41,7 @@ const { googleLogin } = useAuth()
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     let newError = {};
@@ -56,9 +56,14 @@ const { googleLogin } = useAuth()
     setErrors(newError);
 
     if (Object.keys(newError).length > 0) return;
-  };
 
-  
+    try {
+      await signin(formData);
+      navigate("/dashboard");
+    } catch (error) {
+      setErrors({ form: "Invalid email or password" }, error);
+    }
+  };
 
   return (
     <>
@@ -151,9 +156,17 @@ const { googleLogin } = useAuth()
               {SocialLink.map((s, i) => {
                 const Icon = s.icon;
 
+                const handleClick = () => {
+                  if (s.name === "Google") {
+                    googleLogin();
+                  } else if (s.name === "GitHub") {
+                    githubLogin();
+                  }
+                };
+
                 return (
                   <button
-                    onClick={s.name === "Google" ? googleLogin : undefined}
+                    onClick={handleClick}
                     key={i}
                     className="flex-1 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 gap-2 rounded-lg py-2.5 font-body text-base hover:scale-102 hover:opacity-90 active:scale-98 ease-linear transition-all duration-100"
                   >

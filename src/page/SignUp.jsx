@@ -2,11 +2,15 @@ import FootTab from "../component/FootTab";
 import NavTab from "../component/NavTab";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const SignUp = () => {
-    const SocialLink = [
+  const navigate = useNavigate();
+  const { githubLogin, googleLogin, signup } = useAuth();
+
+  const SocialLink = [
     {
       icon: FcGoogle,
       name: "Google",
@@ -38,13 +42,13 @@ const SignUp = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     let newError = {};
 
     if (!formData.fullName.trim()) {
-      newError.fullName = "Fullname required"
+      newError.fullName = "Fullname required";
     }
     if (!formData.email.trim()) {
       newError.email = "Email required";
@@ -53,13 +57,23 @@ const SignUp = () => {
       newError.password = "Password required";
     }
 
-    setErrors(newError)
+    setErrors(newError);
 
-     if (Object.keys(newError).length > 0) return;
+    if (Object.keys(newError).length > 0) return;
+
+    try {
+      await signup(formData);
+      navigate("/dashboard");
+    } catch (error) {
+      setErrors({
+        form:
+          error.response?.data?.message || "Signup failed. Please try again.",
+      });
+    }
   };
 
   return (
-     <>
+    <>
       <NavTab />
       <section className="py-20 dark:bg-[#0d1117] bg-gray-100 dark:text-white">
         <div className="px-5 md:px-10">
@@ -73,6 +87,11 @@ const SignUp = () => {
               </p>
             </div>
             <form className="mb-5 flex flex-col gap-5">
+              {errors.form && (
+                <p className="font-body text-sm text-red-500 text-center">
+                  {errors.form}
+                </p>
+              )}
               <label
                 htmlFor="email"
                 className="flex flex-col gap-5 font-body text-lg font-medium"
@@ -88,11 +107,11 @@ const SignUp = () => {
                   className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 h-10 px-2 rounded-md text-base font-normal"
                   placeholder="John Doe"
                 />
-                {
-                  errors.email && (<p className="font-body text-xs text-red-500 -mt-3">
-                    {errors.email}
-                  </p>)
-                }
+                {errors.fullName && (
+                  <p className="font-body text-xs text-red-500 -mt-3">
+                    {errors.fullName}
+                  </p>
+                )}
               </label>
               <label
                 htmlFor="email"
@@ -109,11 +128,11 @@ const SignUp = () => {
                   className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 h-10 px-2 rounded-md text-base font-normal"
                   placeholder="you@example.com"
                 />
-                {
-                  errors.email && (<p className="font-body text-xs text-red-500 -mt-3">
+                {errors.email && (
+                  <p className="font-body text-xs text-red-500 -mt-3">
                     {errors.email}
-                  </p>)
-                }
+                  </p>
+                )}
               </label>
               <label
                 htmlFor="password"
@@ -134,11 +153,11 @@ const SignUp = () => {
                   className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 h-10 px-2 rounded-md text-base font-normal"
                   placeholder="Min. 8 character"
                 />
-                 {
-                  errors.password && (<p className="font-body text-xs text-red-500 -mt-3">
+                {errors.password && (
+                  <p className="font-body text-xs text-red-500 -mt-3">
                     {errors.password}
-                  </p>)
-                }
+                  </p>
+                )}
               </label>
               <label
                 htmlFor="checkbox"
@@ -150,7 +169,15 @@ const SignUp = () => {
                   onChange={() => setIsAgreed(!isAgreed)}
                   className="w-4 h-4 border-2 border-gray-600 dark:border-gray-500 rounded-sm"
                 />
-                I agree to<NavLink className="font-medium text-indigo-500">Terms of service</NavLink> and <NavLink className="font-medium text-indigo-500">Privacy policy</NavLink>.
+                I agree to
+                <NavLink className="font-medium text-indigo-500">
+                  Terms of service
+                </NavLink>{" "}
+                and{" "}
+                <NavLink className="font-medium text-indigo-500">
+                  Privacy policy
+                </NavLink>
+                .
               </label>
 
               <button
@@ -170,8 +197,16 @@ const SignUp = () => {
               {SocialLink.map((s, i) => {
                 const Icon = s.icon;
 
+                const handleClick = () => {
+                  if (s.name === "Google") {
+                    googleLogin();
+                  } else if (s.name === "GitHub") {
+                    githubLogin();
+                  }
+                };
                 return (
                   <button
+                    onClick={handleClick}
                     key={i}
                     className="flex-1 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 gap-2 rounded-lg py-2.5 font-body text-base"
                   >
@@ -182,7 +217,7 @@ const SignUp = () => {
             </div>
             <p className="text-center font-body font-normal text-base leading-relaxed dark:text-gray-400 text-gray-500">
               Already have an account?{" "}
-              <NavLink to="/signup" className="ml-1 text-indigo-600">
+              <NavLink to="/signin" className="ml-1 text-indigo-600">
                 Sign in
               </NavLink>
             </p>
@@ -191,7 +226,7 @@ const SignUp = () => {
       </section>
       <FootTab />
     </>
-  )
-}
+  );
+};
 
-export default SignUp
+export default SignUp;
