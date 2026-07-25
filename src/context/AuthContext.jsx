@@ -1,10 +1,13 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
+  const hasProcessedGithubCode = useRef(false);
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [loading, setLoading] = useState(true);
@@ -23,6 +26,7 @@ export function AuthProvider({ children }) {
         formData,
       );
       saveAuth(res.data.data.token, res.data.data);
+      navigate("/dashboard");
     } catch (error) {
       console.log("Sign up failed", error);
       throw error;
@@ -34,6 +38,7 @@ export function AuthProvider({ children }) {
       const API_BASE = import.meta.env.VITE_API_BASE_URL;
       const res = await axios.post(`${API_BASE}/api/users/loginUser`, formData);
       saveAuth(res.data.token, res.data.userInfo);
+      navigate("/dashboard");
     } catch (error) {
       console.log("Log in failed", error);
       throw error;
@@ -54,6 +59,8 @@ export function AuthProvider({ children }) {
           access_token: tokenResponse.access_token,
         });
         saveAuth(res.data.token, res.data.user);
+
+        navigate("/dashboard");
       } catch (error) {
         console.log("Google login failed", error);
       }
@@ -78,6 +85,8 @@ export function AuthProvider({ children }) {
     const code = params.get("code");
 
     if (!code) return;
+    if (hasProcessedGithubCode.current) return;
+    hasProcessedGithubCode.current = true;
 
     const handleGithubCallback = async () => {
       const API_BASE = import.meta.env.VITE_API_BASE_URL;
@@ -85,6 +94,7 @@ export function AuthProvider({ children }) {
         const res = await axios.post(`${API_BASE}/api/users/github`, { code });
         saveAuth(res.data.token, res.data.user);
         window.history.replaceState({}, "", window.location.pathname);
+        navigate("/dashboard");
       } catch (error) {
         console.log("GitHub login failed", error);
       }
@@ -93,8 +103,27 @@ export function AuthProvider({ children }) {
     handleGithubCallback();
   }, []);
 
+  const fetchUser = async (currentToken) => {
+    try {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL;
+      const res = await axios.get(`${API_BASE}/api/users/getUser`, {
+        headers: { Authorization: `Bearer ${currentToken}` },
+      });
+      setUser(res.data.data);
+    } catch (error) {
+      console.log("Failed to fetch user", error);
+      logout();
+    }
+  };
+
   useEffect(() => {
-    setLoading(false);
+    const existingToken = localStorage.getItem("token");
+
+    if (existingToken) {
+      fetchUser(existingToken).finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   return (

@@ -1,9 +1,9 @@
-import NavTab from '../component/NavTab'
+import DashTab from '../component/DashTab'
 
 const DashBoard = () => {
   return (
     <>
-    <NavTab/>
+    <DashTab/>
     </>
   )
 }
