@@ -5,9 +5,12 @@ import { useAuth } from "./AuthContext";
 const TaskContext = createContext();
 
 export function TaskProvider({ children }) {
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
   const { token } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("All tasks");
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   const fetchTask = async () => {
@@ -66,23 +69,61 @@ export function TaskProvider({ children }) {
   };
 
   const removeTask = async (id) => {
-    setIsLoading(true)
-   try {
-     const res = await axios.delete(`${API_BASE}/api/tasks/deleteTask/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    setIsLoading(true);
+    try {
+      const res = await axios.delete(`${API_BASE}/api/tasks/deleteTask/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    setTasks(tasks.filter((task) => task._id !== id))
-   } catch (error) {
-    console.log(error.response?.data)
-   } finally {
-    setIsLoading(false)
-   }
+      setTasks(tasks.filter((task) => task._id !== id));
+    } catch (error) {
+      console.log(error.response?.data);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredTasks = tasks.filter((task) => {
+    if (activeFilter === "All tasks") return true;
+    if (activeFilter === "Pending") return task.status === "pending";
+    if (activeFilter === "In progress") return task.status === "in-progress";
+    if (activeFilter === "Completed") return task.status === "completed";
+    return true;
+  });
+
+  const openCreatePanel = () => {
+    setEditingTask(null);
+    setIsPanelOpen(true);
+  };
+
+  const openEditPanel = (task) => {
+    setEditingTask(task);
+    setIsPanelOpen(true);
+  };
+
+  const closePanel = () => {
+    setIsPanelOpen(false);
+    setEditingTask(null);
   };
 
   return (
     <TaskContext.Provider
-      value={{ fetchTask, tasks, isLoading, addTask, editTask, removeTask }}
+      value={{
+        fetchTask,
+        tasks,
+        isLoading,
+        addTask,
+        editTask,
+        removeTask,
+        activeFilter,
+        setActiveFilter,
+        filteredTasks,
+        isPanelOpen,
+        editingTask,
+        openCreatePanel,
+        openEditPanel,
+        closePanel,
+      }}
     >
       {children}
     </TaskContext.Provider>
