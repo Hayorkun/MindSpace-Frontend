@@ -2,13 +2,12 @@ import FootTab from "../component/FootTab";
 import NavTab from "../component/NavTab";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
-import { NavLink, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { NavLink } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 
 const SignUp = () => {
-  const navigate = useNavigate();
-  const { githubLogin, googleLogin, signup } = useAuth();
+  const { githubLogin, googleLogin, signup, setLoading, authError, clearAuthError } = useAuth();
 
   const SocialLink = [
     {
@@ -20,7 +19,7 @@ const SignUp = () => {
       name: "GitHub",
     },
   ];
-
+  const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState({});
   const [isAgreed, setIsAgreed] = useState(false);
   const [formData, setFormData] = useState({
@@ -30,16 +29,29 @@ const SignUp = () => {
     isRemembered: false,
   });
 
-  const handleChange = (f) => {
-    setFormData({
-      ...formData,
-      [f.target.name]: f.target.value,
-    });
+   useEffect(() => {
+      clearAuthError();
+    }, [])
+  
+    useEffect(() => {
+  
+       if (authError){
+        setSubmitting(false)
+       }
+    }, [authError])
 
-    setErrors({
-      ...errors,
+  const handleChange = (f) => {
+    clearAuthError();
+
+    setFormData((prev) => ({
+      ...prev,
+      [f.target.name]: f.target.value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
       [f.target.name]: "",
-    });
+    }))
   };
 
   const handleSubmit = async (e) => {
@@ -62,13 +74,17 @@ const SignUp = () => {
     if (Object.keys(newError).length > 0) return;
 
     try {
+      setSubmitting(true)
+      setLoading(true)
       await signup(formData);
-      navigate("/dashboard");
     } catch (error) {
       setErrors({
         form:
-          error.response?.data?.message || "Signup failed. Please try again.",
+          error.response?.data?.message || "Sign up failed. Please try again.",
       });
+    } finally {
+      setSubmitting(false)
+      setLoading(false)
     }
   };
 
@@ -86,10 +102,10 @@ const SignUp = () => {
                 Start organizing your work and life for free.
               </p>
             </div>
-            <form className="mb-5 flex flex-col gap-5">
-              {errors.form && (
+            <form onSubmit={handleSubmit} className="mb-5 flex flex-col gap-5">
+              {authError && (
                 <p className="font-body text-sm text-red-500 text-center">
-                  {errors.form}
+                  {authError}
                 </p>
               )}
               <label
@@ -182,10 +198,10 @@ const SignUp = () => {
 
               <button
                 type="submit"
-                onClick={handleSubmit}
+                disabled={submitting}
                 className="bg-indigo-600 py-2 rounded-lg text-lg text-white"
               >
-                Create free account
+                {submitting ? "Creating account..." : "Create account"}
               </button>
             </form>
             <div className="flex items-center gap-3 mb-5">
@@ -198,6 +214,8 @@ const SignUp = () => {
                 const Icon = s.icon;
 
                 const handleClick = () => {
+                  setSubmitting(true)
+
                   if (s.name === "Google") {
                     googleLogin();
                   } else if (s.name === "GitHub") {
@@ -206,7 +224,9 @@ const SignUp = () => {
                 };
                 return (
                   <button
+                  type="button"
                     onClick={handleClick}
+                    disabled={submitting}
                     key={i}
                     className="flex-1 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 gap-2 rounded-lg py-2.5 font-body text-base"
                   >

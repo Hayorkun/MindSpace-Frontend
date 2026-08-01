@@ -2,13 +2,20 @@ import FootTab from "../component/FootTab";
 import NavTab from "../component/NavTab";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
-import { NavLink, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { NavLink } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
 const SignIn = () => {
-  const navigate = useNavigate()
-  const { googleLogin, githubLogin, signin } = useAuth();
+  const {
+    googleLogin,
+    githubLogin,
+    signin,
+    setLoading,
+    authError,
+    clearAuthError,
+  } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
 
   const SocialLink = [
     {
@@ -22,23 +29,35 @@ const SignIn = () => {
   ];
 
   const [errors, setErrors] = useState({});
-  const [isRemembered, setIsRemembered] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     isRemembered: false,
   });
 
-  const handleChange = (f) => {
-    setFormData({
-      ...formData,
-      [f.target.name]: f.target.value,
-    });
+  useEffect(() => {
+    clearAuthError();
+  }, [])
 
-    setErrors({
-      ...errors,
+  useEffect(() => {
+
+     if (authError){
+      setSubmitting(false)
+     }
+  }, [authError])
+
+  const handleChange = (f) => {
+    clearAuthError();
+
+    setFormData((prev) => ({
+      ...prev,
+      [f.target.name]: f.target.value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
       [f.target.name]: "",
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -58,10 +77,17 @@ const SignIn = () => {
     if (Object.keys(newError).length > 0) return;
 
     try {
+      setSubmitting(true);
+      setLoading(true);
       await signin(formData);
-      navigate("/dashboard");
     } catch (error) {
-      setErrors({ form: "Invalid email or password" }, error);
+      setErrors({
+        form:
+          error.response?.data?.message || "Sign in failed. Please try again.",
+      });
+    } finally {
+      setSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -79,7 +105,12 @@ const SignIn = () => {
                 Enter your credentials to access your workspace.
               </p>
             </div>
-            <form className="mb-5 flex flex-col gap-5">
+            <form onSubmit={handleSubmit} className="mb-5 flex flex-col gap-5">
+              {authError && (
+                <p className="font-body text-sm text-red-500 text-center">
+                  {authError}
+                </p>
+              )}
               <label
                 htmlFor="email"
                 className="flex flex-col gap-5 font-body text-lg font-medium"
@@ -87,7 +118,7 @@ const SignIn = () => {
                 {" "}
                 Email address
                 <input
-                  type="text"
+                  type="email"
                   id="email"
                   name="email"
                   onChange={handleChange}
@@ -107,7 +138,10 @@ const SignIn = () => {
               >
                 <div className="flex justify-between items-center">
                   Password
-                  <NavLink className="text-sm text-indigo-600">
+                  <NavLink
+                    to="/forgot-password"
+                    className="text-sm text-indigo-600"
+                  >
                     Forgot password?
                   </NavLink>
                 </div>
@@ -131,9 +165,15 @@ const SignIn = () => {
                 className="font-body text-sm font-normal text-gray-700 dark:text-gray-300 flex items-center gap-2"
               >
                 <input
+                  id="checkbox"
                   type="checkbox"
-                  checked={isRemembered}
-                  onChange={() => setIsRemembered(!isRemembered)}
+                  checked={formData.isRemembered}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      isRemembered: e.target.checked,
+                    }))
+                  }
                   className="w-4 h-4 border-2 border-gray-600 dark:border-gray-500 rounded-sm"
                 />
                 Remember me for 30 days
@@ -141,10 +181,10 @@ const SignIn = () => {
 
               <button
                 type="submit"
-                onClick={handleSubmit}
+                disabled={submitting}
                 className="bg-indigo-600 py-2 rounded-lg text-lg text-white hover:bg-indigo-500 transition-colors ease-linear duration-200 hover:scale-101 active:scale-98"
               >
-                Sign in
+                {submitting ? "Signing in...." : "Sign in"}
               </button>
             </form>
             <div className="flex items-center gap-3 mb-5">
@@ -156,17 +196,20 @@ const SignIn = () => {
               {SocialLink.map((s, i) => {
                 const Icon = s.icon;
 
-                const handleClick = () => {
+                const handleClick = async () => {
+                  setSubmitting(true);
                   if (s.name === "Google") {
                     googleLogin();
                   } else if (s.name === "GitHub") {
                     githubLogin();
-                  }
+                  } 
                 };
 
                 return (
                   <button
+                    type="button"
                     onClick={handleClick}
+                    disabled={submitting}
                     key={i}
                     className="flex-1 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 gap-2 rounded-lg py-2.5 font-body text-base hover:scale-102 hover:opacity-90 active:scale-98 ease-linear transition-all duration-100"
                   >
@@ -176,9 +219,9 @@ const SignIn = () => {
               })}
             </div>
             <p className="text-center font-body font-normal text-base leading-relaxed dark:text-gray-400 text-gray-500">
-              Dont't have an account?{" "}
+              Don't have an account?{" "}
               <NavLink to="/signup" className="ml-1 text-indigo-600">
-                Create on free
+                Create one for free
               </NavLink>
             </p>
           </div>

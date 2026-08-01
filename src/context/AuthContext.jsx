@@ -11,14 +11,24 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
+
+  const clearAuthError = () => {
+    setAuthError(null);
+  };
 
   const saveAuth = (newToken, newUser) => {
-    localStorage.setItem("token", newToken);
+    try {
+      localStorage.setItem("token", newToken);
+    } catch (err) {
+      console.error("localStorage.setItem threw:", err);
+    }
     setToken(newToken);
     setUser(newUser);
   };
 
   const signup = async (formData) => {
+    clearAuthError();
     try {
       const API_BASE = import.meta.env.VITE_API_BASE_URL;
       const res = await axios.post(
@@ -34,6 +44,7 @@ export function AuthProvider({ children }) {
   };
 
   const signin = async (formData) => {
+    clearAuthError();
     try {
       const API_BASE = import.meta.env.VITE_API_BASE_URL;
       const res = await axios.post(`${API_BASE}/api/users/loginUser`, formData);
@@ -49,10 +60,12 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("token");
     setToken(null);
     setUser(null);
+    navigate("/signin");
   };
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
+      clearAuthError();
       try {
         const API_BASE = import.meta.env.VITE_API_BASE_URL;
         const res = await axios.post(`${API_BASE}/api/users/google`, {
@@ -62,18 +75,16 @@ export function AuthProvider({ children }) {
 
         navigate("/dashboard");
       } catch (error) {
-        console.log("Google login failed", error);
+        setAuthError(error.response?.data?.message || "Google login failed");
       }
     },
-    onError: () => {
-      console.log("Google login failed");
-    },
+    onError: () => setAuthError("Google login failed"),
   });
 
   const githubLogin = () => {
     const params = new URLSearchParams({
       client_id: import.meta.env.VITE_GITHUB_CLIENT_ID,
-      redirect_uri: "https://mindspace-taskmanager.vercel.app",
+      redirect_uri: import.meta.env.VITE_GITHUB_REDIRECT_URI,
       scope: "read:user user:email",
     });
 
@@ -89,6 +100,7 @@ export function AuthProvider({ children }) {
     hasProcessedGithubCode.current = true;
 
     const handleGithubCallback = async () => {
+      clearAuthError();
       const API_BASE = import.meta.env.VITE_API_BASE_URL;
       try {
         const res = await axios.post(`${API_BASE}/api/users/github`, { code });
@@ -96,7 +108,7 @@ export function AuthProvider({ children }) {
         window.history.replaceState({}, "", window.location.pathname);
         navigate("/dashboard");
       } catch (error) {
-        console.log("GitHub login failed", error);
+        setAuthError(error.response?.data?.message || "Github login failed");
       }
     };
 
@@ -116,9 +128,13 @@ export function AuthProvider({ children }) {
     }
   };
 
-  useEffect(() => {
-    const existingToken = localStorage.getItem("token");
+  const hasFetchedUser = useRef(false);
 
+  useEffect(() => {
+    if (hasFetchedUser.current) return;
+    hasFetchedUser.current = true;
+
+    const existingToken = localStorage.getItem("token");
     if (existingToken) {
       fetchUser(existingToken).finally(() => setLoading(false));
     } else {
@@ -133,10 +149,13 @@ export function AuthProvider({ children }) {
         githubLogin,
         signin,
         signup,
-        loading,
+        setLoading,
         user,
         token,
         logout,
+        authError,
+        clearAuthError,
+        loading,
       }}
     >
       {children}
