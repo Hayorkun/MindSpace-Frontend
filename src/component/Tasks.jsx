@@ -3,7 +3,7 @@ import { Edit, Trash2, Calendar, Plus } from "lucide-react";
 
 
 const Tasks = () => {
-  const { filteredTasks, isLoading, removeTask, openEditPanel } = useTask();
+  const { filteredTasks, isLoading, removeTask, openEditPanel, openCreatePanel } = useTask();
 
   if (isLoading) {
     return (
@@ -51,12 +51,13 @@ const Tasks = () => {
 
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate">{task.title}</p>
-              <p className="text-sm text-gray-500 truncate">
+              <p className="text-sm text-gray-500 truncate w-70">
                 {task.description}
               </p>
             </div>
 
-            <span className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">
+           <div className="flex ">
+             <span className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">
               {task.category}
             </span>
 
@@ -78,11 +79,12 @@ const Tasks = () => {
             <button onClick={() => removeTask(task._id)}>
               <Trash2 size={16} className="text-gray-500 hover:text-red-600" />
             </button>
+           </div>
           </div>
         ))}
        
       </div>
-       <button className="fixed bottom-6 right-6 flex gap-1 items-center justify-center bg-indigo-500 px-3 py-2 rounded-full text-gray-200 shadow-lg hover:bg-indigo-600 hover:scale-105 transition">
+       <button onClick={openCreatePanel} className="fixed bottom-6 right-6 flex gap-1 items-center justify-center bg-indigo-500 px-3 py-2 rounded-full text-gray-200 shadow-lg hover:bg-indigo-600 hover:scale-105 transition">
         <Plus />
         <span className="hidden lg:flex font-body font-medium">New Task</span>
       </button>

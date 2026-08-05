@@ -37,14 +37,7 @@ const SignIn = () => {
 
   useEffect(() => {
     clearAuthError();
-  }, [])
-
-  useEffect(() => {
-
-     if (authError){
-      setSubmitting(false)
-     }
-  }, [authError])
+  }, [clearAuthError]);
 
   const handleChange = (f) => {
     clearAuthError();

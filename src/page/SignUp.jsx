@@ -29,16 +29,9 @@ const SignUp = () => {
     isRemembered: false,
   });
 
-   useEffect(() => {
-      clearAuthError();
-    }, [])
-  
-    useEffect(() => {
-  
-       if (authError){
-        setSubmitting(false)
-       }
-    }, [authError])
+  useEffect(() => {
+    clearAuthError();
+  }, [clearAuthError]);
 
   const handleChange = (f) => {
     clearAuthError();

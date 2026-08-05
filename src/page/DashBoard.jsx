@@ -51,7 +51,7 @@ const DashBoard = () => {
     <div className="flex bg-gray-200 dark:bg-gray-900 dark:text-white h-screen">
       {/* sidebar */}
       <div
-        className={`fixed z-50 w-60 h-screen bg-gray-100 dark:bg-gray-800 shadow transform transition-transform duration-300 ease-in-out ${sideBarOpen ? "translate-x-0" : "-translate-x-60"} lg:translate-x-0 lg:static`}
+        className={`fixed z-50 w-60 h-screen bg-gray-100 dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out ${sideBarOpen ? "translate-x-0" : "-translate-x-60"} lg:translate-x-0 lg:static`}
       >
         <div className="h-full flex flex-col justify-between">
           <div>
@@ -84,7 +84,7 @@ const DashBoard = () => {
                     to={n.to}
                     end={n.to === "/dashboard"}
                     className={({ isActive }) =>
-                      `flex items-center gap-2 p-1 rounded-sm ${isActive ? "bg-indigo-500 text-white" : "dark:hover:bg-gray-900 hover:bg-gray-300"}`
+                      `flex items-center gap-2 p-1 rounded-sm ${isActive ? "bg-indigo-700 text-white" : "dark:hover:bg-gray-900 hover:bg-gray-300"}`
                     }
                   >
                     <Icon className="size-5" />
@@ -133,7 +133,7 @@ const DashBoard = () => {
             </h1>
             {isDashboardHome && (
               <div className="hidden lg:flex rounded-md border px-2 w-60 h-full gap-2 border-gray-400 bg-gray-300 dark:border-gray-600 dark:bg-gray-700 items-center">
-                <Search />
+                <Search className="size-5"/>
                 <input
                   type="text"
                   className="outline-0 font-body text-lg"
@@ -142,12 +142,12 @@ const DashBoard = () => {
               </div>
             )}
           </div>
-          <button onClick={toggleTheme} className="">
+          <button onClick={toggleTheme} className="cursor-pointer">
             {theme === "dark" ? <Sun /> : <Moon />}
           </button>
         </header>
         <div>
-          <Outlet />
+          <Outlet/>
         </div>
       </main>
     </div>

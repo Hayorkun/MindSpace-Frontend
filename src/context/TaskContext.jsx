@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "./AuthContext";
 
@@ -10,23 +11,28 @@ export function TaskProvider({ children }) {
   const { token } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeFilter, setActiveFilter] = useState("All tasks");
+  const [activeFilter, setActiveFilter] = useState("Tasks");
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
-  const fetchTask = async () => {
+  const fetchTask = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/api/tasks/getTask`, {
+      if (!token) {
+        setTasks([]);
+        return;
+      }
+
+      const { data } = await axios.get(`${API_BASE}/api/tasks/getTask`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setTasks(res.data.data);
+      setTasks(data.data || []);
     } catch (error) {
       console.log("Error fetching data:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [API_BASE, token]);
 
   const addTask = async (formData) => {
     setIsLoading(true);
@@ -60,7 +66,9 @@ export function TaskProvider({ children }) {
 
       const updatedTask = res.data.data;
 
-      setTasks(tasks.map((task) => (task._id === id ? updatedTask : task)));
+      setTasks((prevTasks) =>
+        prevTasks.map((task) => (task._id === id ? updatedTask : task)),
+      );
     } catch (error) {
       console.log(error.response?.data);
     } finally {
@@ -71,11 +79,11 @@ export function TaskProvider({ children }) {
   const removeTask = async (id) => {
     setIsLoading(true);
     try {
-      const res = await axios.delete(`${API_BASE}/api/tasks/deleteTask/${id}`, {
+      await axios.delete(`${API_BASE}/api/tasks/deleteTask/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setTasks(tasks.filter((task) => task._id !== id));
+      setTasks((prevTasks) => prevTasks.filter((task) => task._id !== id));
     } catch (error) {
       console.log(error.response?.data);
     } finally {
@@ -84,7 +92,7 @@ export function TaskProvider({ children }) {
   };
 
   const filteredTasks = tasks.filter((task) => {
-    if (activeFilter === "All tasks") return true;
+    if (activeFilter === "Tasks") return true;
     if (activeFilter === "Pending") return task.status === "pending";
     if (activeFilter === "In progress") return task.status === "in-progress";
     if (activeFilter === "Completed") return task.status === "completed";
@@ -105,6 +113,16 @@ export function TaskProvider({ children }) {
     setIsPanelOpen(false);
     setEditingTask(null);
   };
+
+  useEffect(() => {
+    if (!token) return;
+
+    const loadTasks = async () => {
+      await fetchTask();
+    };
+
+    void loadTasks();
+  }, [fetchTask, token]);
 
   return (
     <TaskContext.Provider

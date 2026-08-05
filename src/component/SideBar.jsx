@@ -1,10 +1,7 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { useTask } from "../context/TaskContext";
-import Images from "../assets/image"
+import Images from "../assets/image";
 
 const SideBar = () => {
-  const Options = [];
-  const { activeFilter, setActiveFilter } = useTask();
 
   return (
     // <section className="dark:bg-gray-900 dark:text-white">
