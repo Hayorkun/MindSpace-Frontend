@@ -1,6 +1,8 @@
 import { useTask } from "../context/TaskContext";
 import { Edit, Trash2, Calendar, Plus } from "lucide-react";
 import CreateTaskPanel from "./CreateTaskPanel";
+import EditTaskPanel from "./EditTaskPanel";
+import TaskDetail from "./TaskDetail";
 
 const Tasks = () => {
   const {
@@ -9,6 +11,8 @@ const Tasks = () => {
     removeTask,
     openEditPanel,
     openCreatePanel,
+    openTaskDetails,
+    selectedTask,
   } = useTask();
 
   if (isLoading) {
@@ -37,71 +41,74 @@ const Tasks = () => {
     );
   }
 
-  const statusColor = {
-    pending: "bg-yellow-500",
-    "in-progress": "bg-blue-500",
-    completed: "bg-green-500",
-  };
-
   return (
     <section className="p-5">
-      <div className="flex flex-col gap-3 lg:flex-1">
-        {filteredTasks.map((task) => (
-          <div
-            key={task._id}
-            className="flex lg:flex-row justify-between border border-gray-600 dark:border-gray-700 rounded-lg px-4 py-3"
-          >
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${statusColor[task.status]}`}
-              />
+      <div className="lg:flex gap-3">
+        <div className="lg:flex-3 flex flex-col gap-3">
+          {filteredTasks.map((task) => (
+            <div
+              onClick={() => openTaskDetails(task)}
+              key={task._id}
+              className={`flex lg:flex-row justify-between items-start border border-gray-400 dark:border-gray-700 dark:bg-gray-800/70 bg-gray-300/70 rounded-lg px-4 py-3 border-l-8 ${
+                task.status === "pending"
+                  ? "border-l-yellow-500 dark:border-l-yellow-500"
+                  : task.status === "in-progress"
+                    ? "border-l-blue-500 dark:border-l-blue-500"
+                    : "border-l-green-500 dark:border-l-green-500"
+              } `}
+            >
+              <div className="flex items-center gap-2">
+                <div>
+                  <div className="space-y-2.5">
+                    <h2 className="font-medium text-md truncate">
+                      {task.title}
+                    </h2>
+                    <div className="space-x-2.5">
+                      <span className="text-xs px-2 lowercase py-1 rounded-full bg-indigo-100 text-indigo-700">
+                        {task.category}
+                      </span>
 
-              <div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{task.title}</p>
-                  <p className="text-sm text-gray-500 truncate w-50">
-                    {task.description}
-                  </p>
+                      <span className="text-xs lowercase px-2 py-1 rounded-full bg-orange-100 text-orange-700">
+                        {task.priority}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex flex-col">
-              <div>
-                <span className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">
-                  {task.category}
-                </span>
-
-                <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700">
-                  {task.priority}
-                </span>
-              </div>
-
-              <div>
+              <div className="flex justify-between flex-col gap-6">
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => openEditPanel(task)}>
+                    <Edit
+                      size={18}
+                      className="text-gray-500 hover:text-indigo-600 cursor-pointer"
+                    />
+                  </button>
+                  <button onClick={() => removeTask(task._id)}>
+                    <Trash2
+                      size={18}
+                      className="text-gray-500 hover:text-red-600 cursor-pointer"
+                    />
+                  </button>
+                </div>
                 <span className="text-xs text-gray-400 flex items-center gap-1">
                   <Calendar size={14} />
                   {task.dueDate
                     ? new Date(task.dueDate).toLocaleDateString()
                     : "No date"}
                 </span>
-
-                <button onClick={() => openEditPanel(task)}>
-                  <Edit
-                    size={16}
-                    className="text-gray-500 hover:text-indigo-600"
-                  />
-                </button>
-
-                <button onClick={() => removeTask(task._id)}>
-                  <Trash2
-                    size={16}
-                    className="text-gray-500 hover:text-red-600"
-                  />
-                </button>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        <div className="hidden lg:flex-1 lg:block p-3 dark:bg-gray-800/70 bg-gray-300/70">
+          {selectedTask ? (
+            <TaskDetail />
+          ) : (
+            <p>Select a task to view its details.</p>
+          )}
+        </div>
       </div>
+      <EditTaskPanel />
       <CreateTaskPanel />
       <button
         onClick={openCreatePanel}

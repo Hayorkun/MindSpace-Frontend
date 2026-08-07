@@ -122,7 +122,7 @@ const DashBoard = () => {
       )}
 
       {/* Main content */}
-      <main className="flex-1">
+      <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
         <header className="flex p-5 justify-between">
           <button className="lg:hidden" onClick={() => setSideBarOpen(true)}>
             <Menu />
@@ -133,7 +133,7 @@ const DashBoard = () => {
             </h1>
             {isDashboardHome && (
               <div className="hidden lg:flex rounded-md border px-2 w-60 h-full gap-2 border-gray-400 bg-gray-300 dark:border-gray-600 dark:bg-gray-700 items-center">
-                <Search className="size-5"/>
+                <Search className="size-5" />
                 <input
                   type="text"
                   className="outline-0 font-body text-lg"
@@ -146,8 +146,8 @@ const DashBoard = () => {
             {theme === "dark" ? <Sun /> : <Moon />}
           </button>
         </header>
-        <div>
-          <Outlet/>
+        <div className="min-h-0 overflow-hidden">
+          <Outlet />
         </div>
       </main>
     </div>

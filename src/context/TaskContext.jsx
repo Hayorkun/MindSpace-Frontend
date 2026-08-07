@@ -1,17 +1,25 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import axios from "axios";
 import { useAuth } from "./AuthContext";
 
 const TaskContext = createContext();
 
 export function TaskProvider({ children }) {
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
   const { token } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState("Tasks");
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   const fetchTask = useCallback(async () => {
@@ -48,6 +56,7 @@ export function TaskProvider({ children }) {
       setTasks((prevTasks) => [...prevTasks, res.data.data]);
     } catch (error) {
       console.log(error.response?.data);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -71,6 +80,7 @@ export function TaskProvider({ children }) {
       );
     } catch (error) {
       console.log(error.response?.data);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -101,17 +111,31 @@ export function TaskProvider({ children }) {
 
   const openCreatePanel = () => {
     setEditingTask(null);
-    setIsPanelOpen(true);
+    setIsPanelOpen("create");
   };
 
   const openEditPanel = (task) => {
     setEditingTask(task);
-    setIsPanelOpen(true);
+    setIsPanelOpen("edit");
   };
 
   const closePanel = () => {
-    setIsPanelOpen(false);
+    setIsPanelOpen(null);
     setEditingTask(null);
+  };
+
+  const clearEditingTask = () => {
+    setEditingTask(null);
+  };
+
+  const openTaskDetails = (task) => {
+    setSelectedTask(task);
+    setIsDetailsOpen(true);
+  };
+
+  const closeTaskDetails = () => {
+    setSelectedTask(null);
+    setIsDetailsOpen(false);
   };
 
   useEffect(() => {
@@ -141,6 +165,11 @@ export function TaskProvider({ children }) {
         openCreatePanel,
         openEditPanel,
         closePanel,
+        clearEditingTask,
+        selectedTask,
+        isDetailsOpen,
+        openTaskDetails,
+        closeTaskDetails,
       }}
     >
       {children}

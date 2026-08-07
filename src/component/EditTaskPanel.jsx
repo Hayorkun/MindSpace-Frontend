@@ -1,9 +1,10 @@
-import { XIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTask } from "../context/TaskContext";
+import { XIcon, Trash } from "lucide-react";
 
-const CreateTaskPanel = () => {
-  const { isPanelOpen, closePanel, addTask } = useTask();
+const EditTaskPanel = () => {
+  const { isPanelOpen, closePanel, editTask, editingTask, clearEditingTask, removeTask, } =
+    useTask();
 
   const initialState = {
     title: "",
@@ -17,6 +18,19 @@ const CreateTaskPanel = () => {
   const [taskData, setTaskData] = useState(initialState);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (editingTask) {
+      setTaskData({
+        title: editingTask.title,
+        description: editingTask.description || "",
+        dueDate: editingTask.dueDate?.split("T")[0] || "",
+        priority: editingTask.priority,
+        category: editingTask.category,
+        status: editingTask.status,
+      });
+    }
+  }, [editingTask]);
 
   const handleChange = (e) => {
     setTaskData((prev) => ({
@@ -35,6 +49,7 @@ const CreateTaskPanel = () => {
     setTaskData(initialState);
     closePanel();
     setErrors({});
+    clearEditingTask();
   };
 
   const handleSubmit = async (e) => {
@@ -51,19 +66,20 @@ const CreateTaskPanel = () => {
 
     try {
       setSubmitting(true);
-      await addTask(taskData);
+      await editTask(editingTask._id, taskData);
       setTaskData(initialState);
+      clearEditingTask();
       closePanel();
     } catch (error) {
       setErrors({
-        form: error.response?.data?.message || "Error creating task.",
+        form: error.response?.data?.message || "Error editing task.",
       });
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (isPanelOpen !== "create") return null;
+  if (isPanelOpen !== "edit" || !editingTask) return null;
 
   return (
     <>
@@ -80,25 +96,22 @@ const CreateTaskPanel = () => {
           <div className="flex px-6 justify-between items-start mb-5 lg:mb-7 border-b border-gray-400 dark:border-gray-700">
             <div>
               <h2 className="text-gray-700 dark:text-gray-400 font-heading font-bold text-2xl lg:text-3xl leading-tight mb-1">
-                Create New Task
+                Edit Task
               </h2>
               <p className="font-body text-sm lg:text-md text-gray-700 dark:text-gray-400 leading-relaxed lg:tracking-wider">
-                Add the details of your high-performance objective
+                Update the details of your task.
               </p>
             </div>
             <button
               onClick={handleCancel}
               disabled={submitting}
-              className="cursor-pointer disabled:cursor-not-allowed"
+              className="cursor-pointer"
             >
               <XIcon />
             </button>
           </div>
           {errors.form && (
-            <div
-              role="alert"
-              className=" h-10 p-1 bg-red-400 text-white flex text-center"
-            >
+            <div role="alert" className=" h-10 p-1 bg-red-400 text-white flex text-center">
               <p className="font-body text-sm">{errors.form}</p>
             </div>
           )}
@@ -210,10 +223,13 @@ const CreateTaskPanel = () => {
               </div>
             </div>
             <div className="flex justify-between border-t items-center px-6 py-2 border-gray-400 dark:border-gray-700">
-              <button
-                className="font-body text-gray-600 dark:text-gray-300 cursor-pointer disabled:cursor-not-allowed"
+              <button onClick={removeTask} type="button" className="flex items-center text-xs text-red-300 lg:text-sm font-body leading-relaxed gap-1">
+                <Trash className="size-4"/> Delete Task
+              </button>
+              <div className="space-x-5 text-xs lg:text-sm">
+                <button
+                className="font-body text-gray-600 dark:text-gray-300  cursor-pointer"
                 type="button"
-                disabled={submitting}
                 onClick={handleCancel}
               >
                 Cancel
@@ -221,10 +237,11 @@ const CreateTaskPanel = () => {
               <button
                 disabled={submitting}
                 type="submit"
-                className="px-3 py-1.5 bg-indigo-600 text-white text-sm font-normal font-body rounded-md cursor-pointer"
+                className="px-3 py-1.5 bg-indigo-600 text-white text-sm font-normal font-body rounded-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? "Creating Task" : "Create Task"}
+                {submitting ? "Updating task" : "Update task"}
               </button>
+              </div>
             </div>
           </form>
         </div>
@@ -233,4 +250,4 @@ const CreateTaskPanel = () => {
   );
 };
 
-export default CreateTaskPanel;
+export default EditTaskPanel;

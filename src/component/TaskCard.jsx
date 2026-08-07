@@ -18,7 +18,7 @@ const TaskCard = ({ task }) => {
       <div className="flex justify-between items-center mt-4">
         <div className="flex items-center gap-1 text-sm">
           <Calendar size={16} />
-          <span>{task.dueDate}</span>
+          <span>{new Date(task.dueDate).toLocaleDateString()}</span>
         </div>
 
         <span className="px-2 py-1 rounded-full text-xs bg-indigo-500 text-white">
